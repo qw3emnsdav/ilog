@@ -1,0 +1,38 @@
+
+from flask import Flask, render_template, request
+from datetime import datetime, timezone
+from collections import deque
+from threading import Lock
+
+app = Flask(__name__)
+
+events = deque(maxlen=200)
+lock = Lock()
+
+@app.get("/")
+def home():
+    return render_template("dashboard.html")
+
+@app.get("/picture")
+def picture():
+    event = {
+        "time": datetime.now(timezone.utc).isoformat(
+            timespec="seconds"
+        ),
+        "event": "Picture opened",
+        "browser": request.user_agent.browser or "Unknown",
+        "platform": request.user_agent.platform or "Unknown",
+    }
+
+    with lock:
+        events.appendleft(event)
+
+    return app.send_static_file("picture.jpg")
+
+@app.get("/api/events")
+def api_events():
+    with lock:
+        return {"events": list(events)}
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=5000, debug=False)

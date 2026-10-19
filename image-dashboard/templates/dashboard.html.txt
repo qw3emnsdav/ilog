@@ -1,0 +1,77 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Image Visit Dashboard</title>
+  <style>
+    body {
+      background: #10131b;
+      color: #f3f4f6;
+      font: 16px system-ui, sans-serif;
+      margin: 40px auto;
+      padding: 0 20px;
+      max-width: 850px;
+    }
+    h1 { color: #91b7ff; }
+    .panel {
+      background: #1b2130;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 16px 0;
+    }
+    a { color: #91b7ff; }
+    li { padding: 12px 0; border-bottom: 1px solid #394154; }
+    small { color: #aab4c5; }
+  </style>
+</head>
+<body>
+  <h1>Image Visit Dashboard</h1>
+  <p>Updates automatically every 3 seconds.</p>
+
+  <div class="panel">
+    <h2>Test your picture</h2>
+    <p><a href="/picture" target="_blank">Open the picture</a></p>
+  </div>
+
+  <div class="panel">
+    <h2>Recent visits</h2>
+    <ul id="events"><li>Waiting for visits…</li></ul>
+  </div>
+
+  <script>
+    async function refresh() {
+      try {
+        const response = await fetch("/api/events");
+        const data = await response.json();
+        const list = document.getElementById("events");
+        list.replaceChildren();
+
+        if (!data.events.length) {
+          list.textContent = "No visits yet.";
+          return;
+        }
+
+        for (const event of data.events) {
+          const item = document.createElement("li");
+          const title = document.createElement("strong");
+          title.textContent = event.event;
+          const details = document.createElement("small");
+          details.textContent =
+            `\n${event.time} · ${event.browser} · ${event.platform}`;
+          details.style.whiteSpace = "pre-line";
+          item.append(title, details);
+          list.append(item);
+        }
+      } catch {
+        document.getElementById("events").textContent =
+          "Dashboard connection unavailable.";
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 3000);
+  </script>
+</body>
+</html>
